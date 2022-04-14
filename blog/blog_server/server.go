@@ -141,7 +141,7 @@ func (*server) DeleteBlog(ctx context.Context, req *blogpb.DeleteBlogRequest) (*
 			fmt.Sprintf("Cannot Parse ID: %v", oid),
 		)
 	}
-	filter := bson.M{"_id": blogId}
+	filter := bson.M{"_id": oid}
 	deleteRes, deleteErr := collection.DeleteOne(context.Background(), filter)
 	if deleteErr != nil {
 		return nil, status.Errorf(
