@@ -86,11 +86,11 @@ func (*server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blog
 
 	return &blogpb.ReadBlogResponse{
 		Blog: &blogpb.Blog{
-			Id: data.ID.Hex(),
+			Id:       data.ID.Hex(),
 			AuthorId: data.AuthorID,
-			Title: data.Title,
-			Content: data.Content,
-		}
+			Title:    data.Title,
+			Content:  data.Content,
+		},
 	}, nil
 }
 
