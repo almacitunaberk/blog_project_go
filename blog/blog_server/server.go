@@ -32,7 +32,7 @@ type blogItem struct {
 	Content  string             `bson:"content"`
 }
 
-func dataToBlogItem(data *blogItem) *blogpb.Blog {
+func dataToBlogPb(data *blogItem) *blogpb.Blog {
 	return &blogpb.Blog{
 		Id:       data.ID.Hex(),
 		AuthorId: data.AuthorID,
@@ -94,7 +94,7 @@ func (*server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blog
 	}
 
 	return &blogpb.ReadBlogResponse{
-		Blog: dataToBlogItem(data),
+		Blog: dataToBlogPb(data),
 	}, nil
 }
 
@@ -127,7 +127,36 @@ func (*server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) (*
 			fmt.Sprintf("Cannot update object in MongoDB: %v", err))
 	}
 	return &blogpb.UpdateBlogResponse{
-		Blog: dataToBlogItem(data),
+		Blog: dataToBlogPb(data),
+	}, nil
+}
+
+func (*server) DeleteBlog(ctx context.Context, req *blogpb.DeleteBlogRequest) (*blogpb.DeleteBlogResponse, error) {
+	fmt.Println("DeleteBlog service invoked")
+	blogId := req.GetBlogId()
+	oid, err := primitive.ObjectIDFromHex(blogId)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			fmt.Sprintf("Cannot Parse ID: %v", oid),
+		)
+	}
+	filter := bson.M{"_id": blogId}
+	deleteRes, deleteErr := collection.DeleteOne(context.Background(), filter)
+	if deleteErr != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot delete object from MongoDB: %v", oid),
+		)
+	}
+	if deleteRes.DeletedCount == 0 {
+		return nil, status.Errorf(
+			codes.NotFound,
+			fmt.Sprintf("Cannot find blog with specified ID: %v", oid),
+		)
+	}
+	return &blogpb.DeleteBlogResponse{
+		BlogId: blogId,
 	}, nil
 }
 
