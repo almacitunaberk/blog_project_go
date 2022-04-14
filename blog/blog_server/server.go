@@ -2,24 +2,53 @@ package main
 
 import (
 	"blog_project/blog/blogpb"
+	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+	"time"
 )
+
+// We want collection to be globally visible
+var collection *mongo.Collection
 
 type server struct {
 	blogpb.UnimplementedBlogServiceServer
 }
 
+type blogItem struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	AuthorID primitive.ObjectID `bson:"author_id"`
+	Title    string             `bson:"title"`
+	Content  string             `bson:"content"`
+}
+
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Hello")
+
+	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
+	clientOptions := options.Client().
+		ApplyURI("mongodb://localhost:27017").
+		SetServerAPIOptions(serverAPIOptions)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, clientOptions)
+	if err != nil {
+		log.Fatal(err)
+	}
+	collection = client.Database("mydb").Collection("blog")
 	lis, err := net.Listen("tcp", "0.0.0.0:5001")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v\n", err)
 	}
+
 	opts := []grpc.ServerOption{}
 	s := grpc.NewServer(opts...)
 	blogpb.RegisterBlogServiceServer(s, &server{})
@@ -38,5 +67,7 @@ func main() {
 	s.Stop()
 	fmt.Println("Closing the listener")
 	lis.Close()
+	fmt.Println("Closing MongoDB connection")
+	client.Disconnect(context.TODO())
 	fmt.Println("End of program")
 }
