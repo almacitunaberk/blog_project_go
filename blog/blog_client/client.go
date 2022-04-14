@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"io"
 	"log"
 )
 
@@ -38,38 +39,63 @@ func main() {
 	*/
 
 	// Read Blog
-	res, err := c.ReadBlog(context.Background(), &blogpb.ReadBlogRequest{
-		BlogId: "6257ab411d78625941baf004",
-	})
-	if err != nil {
-		log.Fatalf("Error happened when requested a blog: %v\n", err)
-	}
-	fmt.Printf("Read the blog: %v\n", res.GetBlog().GetContent())
+	/*
+		res, err := c.ReadBlog(context.Background(), &blogpb.ReadBlogRequest{
+			BlogId: "6257ab411d78625941baf004",
+		})
+		if err != nil {
+			log.Fatalf("Error happened when requested a blog: %v\n", err)
+		}
+		fmt.Printf("Read the blog: %v\n", res.GetBlog().GetContent())
 
-	// Update Blog
+	*/
 
-	newBlog := &blogpb.Blog{
-		Id:       "6257ab411d78625941baf004",
-		AuthorId: "Tunaberk Almaci",
-		Title:    "Edited Blog",
-		Content:  "Web3, Metaverse and Blockchain are awesome (2)",
-	}
-	updateRes, updateErr := c.UpdateBlog(context.Background(), &blogpb.UpdateBlogRequest{
-		Blog: newBlog,
-	})
-	if updateErr != nil {
-		fmt.Printf("Error happened while returning updated blog: %v\n", err)
-	}
-	fmt.Printf("Read the updated blog: %v\n", updateRes)
+	/*
+
+		// Update Blog
+
+		newBlog := &blogpb.Blog{
+			Id:       "6257ab411d78625941baf004",
+			AuthorId: "Tunaberk Almaci",
+			Title:    "Edited Blog",
+			Content:  "Web3, Metaverse and Blockchain are awesome (2)",
+		}
+		updateRes, updateErr := c.UpdateBlog(context.Background(), &blogpb.UpdateBlogRequest{
+			Blog: newBlog,
+		})
+		if updateErr != nil {
+			fmt.Printf("Error happened while returning updated blog: %v\n", err)
+		}
+		fmt.Printf("Read the updated blog: %v\n", updateRes)
+
+	*/
 
 	// Delete Blog
-	deleteRes, deleteErr := c.DeleteBlog(context.Background(), &blogpb.DeleteBlogRequest{
-		BlogId: "6257ab411d78625941baf004",
-	})
-	if deleteErr != nil {
-		fmt.Printf("Error happened while deleting a blog: %v\n", err)
+	/*
+		deleteRes, deleteErr := c.DeleteBlog(context.Background(), &blogpb.DeleteBlogRequest{
+			BlogId: "6257ab411d78625941baf004",
+		})
+		if deleteErr != nil {
+			fmt.Printf("Error happened while deleting a blog: %v\n", err)
+		}
+
+		fmt.Printf("Deleted the blog with ID: %v\n", deleteRes)
+
+	*/
+
+	// List Blog
+	stream, listBlogErr := c.ListBlog(context.Background(), &blogpb.ListBlogRequest{})
+	if listBlogErr != nil {
+		log.Fatalf("Error before reading the blogs: %v\n", err)
 	}
-
-	fmt.Printf("Deleted the blog with ID: %v\n", deleteRes)
-
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error while reading the blogs: %v\n", err)
+		}
+		fmt.Printf("The next read blog: %v\n", res.GetBlog())
+	}
 }

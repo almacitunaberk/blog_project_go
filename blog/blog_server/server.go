@@ -162,7 +162,8 @@ func (*server) DeleteBlog(ctx context.Context, req *blogpb.DeleteBlogRequest) (*
 
 func (*server) ListBlog(req *blogpb.ListBlogRequest, stream blogpb.BlogService_ListBlogServer) error {
 	fmt.Println("ListBlog service invoked")
-	cur, err := collection.Find(context.Background(), nil)
+	filter := bson.M{}
+	cur, err := collection.Find(context.Background(), filter)
 	if err != nil {
 		return status.Errorf(
 			codes.Internal,
