@@ -26,22 +26,16 @@ type server struct {
 
 type blogItem struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	AuthorID primitive.ObjectID `bson:"author_id"`
+	AuthorID string             `bson:"author_id"`
 	Title    string             `bson:"title"`
 	Content  string             `bson:"content"`
 }
 
 func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error) {
+	fmt.Printf("Create Blog Request: %v\n", req)
 	blog := req.GetBlog()
-	objId, err := primitive.ObjectIDFromHex(blog.GetAuthorId())
-	if err != nil {
-		return nil, status.Errorf(
-			codes.Internal,
-			fmt.Sprintf("String  to ObjectID Conversion Error: %v", err),
-		)
-	}
 	data := blogItem{
-		AuthorID: objId,
+		AuthorID: blog.GetAuthorId(),
 		Title:    blog.GetTitle(),
 		Content:  blog.GetContent(),
 	}
@@ -75,7 +69,7 @@ func main() {
 
 	serverAPIOptions := options.ServerAPI(options.ServerAPIVersion1)
 	clientOptions := options.Client().
-		ApplyURI("mongodb://localhost:27017").
+		ApplyURI("mongodb://localhost:27018").
 		SetServerAPIOptions(serverAPIOptions)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
